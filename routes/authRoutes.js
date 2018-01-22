@@ -18,7 +18,7 @@ module.exports = app => {
 	app.get('/auth/facebook/callback', passport.authenticate('facebook'));
 
 	//local authentication routes
-	app.get('/auth/facebook', passport.authenticate('local', null));
+	//app.post('/auth/local', passport.authenticate('local', null));
 
 	// logout
 	app.get('/api/logout', (req, res) => {

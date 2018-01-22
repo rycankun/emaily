@@ -12,14 +12,9 @@ passport.serializeUser((user, done) => {
 	done(null, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-	User.findById(id)
-		.then(user => {
-			done(null, user);
-		})
-		.catch(e => {
-			throw new Error(e);
-		});
+passport.deserializeUser(async (id, done) => {
+	const user = User.findById(id);
+	await done(null, user);
 });
 
 passport.use(
@@ -30,23 +25,13 @@ passport.use(
 			callbackURL: '/auth/google/callback',
 			proxy: true
 		},
-		(accessToken, refreshToken, profile, done) => {
-			User.findOne({ googleID: profile.id })
-				.then(existingUser => {
-					existingUser
-						? done(null, existingUser)
-						: new User({ googleID: profile.id })
-								.save()
-								.then(user => {
-									done(null, user);
-								})
-								.catch(e => {
-									throw new Error(e);
-								});
-				})
-				.catch(e => {
-					throw new Error(e);
-				});
+		async (accessToken, refreshToken, profile, done) => {
+			const existingUser = await User.findOne({ googleID: profile.id });
+			if (existingUser) {
+				return done(null, existingUser);
+			}
+			const user = await new User({ googleID: profile.id }).save();
+			done(null, user);
 		}
 	)
 );
@@ -59,44 +44,25 @@ passport.use(
 			callbackURL: '/auth/facebook/callback',
 			proxy: true
 		},
-		(accessToken, refreshToken, profile, done) => {
-			User.findOne({ facebookID: profile.id })
-				.then(existingUser => {
-					existingUser
-						? done(null, existingUser)
-						: new User({ facebookID: profile.id })
-								.save()
-								.then(user => {
-									done(null, user);
-								})
-								.catch(e => {
-									throw new Error(e);
-								});
-				})
-				.catch(e => {
-					throw new Error(e);
-				});
+		async (accessToken, refreshToken, profile, done) => {
+			const existingUser = await User.findOne({ facebookID: profile.id });
+			if (existingUser) {
+				return done(null, existingUser);
+			}
+			const user = await new User({ facebookID: profile.id }).save();
+			done(null, user);
 		}
 	)
 );
 
 passport.use(
-	new LocalStrategy((username, password, done) => {
-		User.findOne({ username })
-			.then(existingUser => {
-				existingUser
-					? done(null, existingUser)
-					: new User({ username, password })
-							.save()
-							.then(user => {
-								done(null, user);
-							})
-							.catch(e => {
-								throw new Error(e);
-							});
-			})
-			.catch(e => {
-				throw new Error(e);
-			});
+	new LocalStrategy(async (username, password, done) => {
+		console.log(req);
+		const existingUser = await User.findOne({ username, password });
+		if (existingUser) {
+			return done(null, existingUser);
+		}
+		const user = await new User({ username, password }).save();
+		done(null, user);
 	})
 );
